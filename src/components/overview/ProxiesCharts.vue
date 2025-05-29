@@ -14,8 +14,8 @@
       class="h-full w-full"
     />
     <span
-      class="border-base-content/30 text-base-content/10 bg-base-100/70 hidden"
       ref="colorRef"
+      class="border-base-content/30 text-base-content/10 bg-base-100/70 hidden"
     />
     <button
       class=""
@@ -36,11 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { isSingBox } from '@/api'
-import { proxyGroupList, proxyMap } from '@/store/proxies'
-import { font, theme } from '@/store/settings'
-import { activeUuid } from '@/store/setup'
 import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from '@heroicons/vue/24/outline'
+import { isSingBox } from '@renderer/api'
+import { proxyGroupList, proxyMap } from '@renderer/store/proxies'
+import { font, theme } from '@renderer/store/settings'
+import { activeUuid } from '@renderer/store/setup'
 import { useElementSize } from '@vueuse/core'
 import { TreeChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'

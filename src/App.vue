@@ -6,7 +6,7 @@ import { RouterView } from 'vue-router'
 import { useNotification } from './composables/notification'
 import { FONTS } from './constant'
 import { getBase64FromIndexedDB, LOCAL_IMAGE } from './helper/indexeddb'
-import { isPreferredDark } from './helper/utils'
+import { isDarkTheme, isPreferredDark } from './helper/utils'
 import {
   blurIntensity,
   customBackgroundURL,
@@ -88,6 +88,8 @@ onMounted(() => {
     () => {
       document.body.setAttribute('data-theme', theme.value)
       setThemeColor()
+      isDarkTheme.value =
+        getComputedStyle(document.body).getPropertyValue('color-scheme') === 'dark'
     },
     {
       immediate: true,
@@ -106,8 +108,8 @@ const blurClass = computed(() => {
 
 <template>
   <div
-    ref="app"
     id="app-content"
+    ref="app"
     :class="[
       'bg-base-100 flex h-dvh w-screen overflow-x-hidden',
       fontClassName,
@@ -119,8 +121,8 @@ const blurClass = computed(() => {
   >
     <RouterView />
     <div
-      class="toast-sm toast toast-end toast-top z-50 max-w-64 text-sm md:translate-y-8"
       v-if="tipShowModel"
+      class="toast-sm toast toast-end toast-top z-50 max-w-64 text-sm md:translate-y-8"
     >
       <div
         class="breaks-all alert flex p-2 whitespace-normal"
