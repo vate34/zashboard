@@ -1,5 +1,8 @@
 name: Sync with Upstream (main & gh-pages)
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '0 0 * * *'  # 每天 UTC 时间 00:00 同步一次
@@ -12,10 +15,6 @@ jobs:
     steps:
       - name: Checkout your fork (main)
         uses: actions/checkout@v4
-        with:
-          repository: vate34/zashboard
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync with upstream (main)
         uses: codacy/github-action-sync-fork@master
@@ -31,10 +30,6 @@ jobs:
     steps:
       - name: Checkout your fork (gh-pages)
         uses: actions/checkout@v4
-        with:
-          repository: vate34/zashboard
-          ref: gh-pages
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync with upstream (gh-pages)
         uses: codacy/github-action-sync-fork@master
