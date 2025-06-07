@@ -17,12 +17,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync with upstream (main)
-        uses: codacy/github-action-sync-fork@master
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
         with:
-          target-branch: main
-          upstream-repo: Zephyruso/zashboard
-          upstream-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target_sync_branch: main
+          upstream_sync_repo: Zephyruso/zashboard
+          upstream_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
 
   sync-gh-pages:
     name: Sync gh-pages branch
@@ -32,9 +32,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync with upstream (gh-pages)
-        uses: codacy/github-action-sync-fork@master
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
         with:
-          target-branch: gh-pages
-          upstream-repo: Zephyruso/zashboard
-          upstream-branch: gh-pages
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target_sync_branch: gh-pages
+          upstream_sync_repo: Zephyruso/zashboard
+          upstream_sync_branch: gh-pages
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
