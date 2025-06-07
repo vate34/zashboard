@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout your fork (main)
         uses: actions/checkout@v4
+        with:
+          repository: vate34/zashboard
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync with upstream (main)
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
@@ -22,4 +26,22 @@ jobs:
           target_sync_branch: main
           upstream_sync_repo: Zephyruso/zashboard
           upstream_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+  sync-gh-pages:
+    name: Sync gh-pages branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your fork (gh-pages)
+        uses: actions/checkout@v4
+        with:
+          repository: vate34/zashboard
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync with upstream (gh-pages)
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+        with:
+          target_sync_branch: gh-pages
+          upstream_sync_repo: Zephyruso/zashboard
+          upstream_sync_branch: gh-pages
           target_repo_token: ${{ secrets.GITHUB_TOKEN }}
