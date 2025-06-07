@@ -1,4 +1,4 @@
-name: Sync with Upstream Main
+name: Sync with Upstream
 
 permissions:
   contents: write
