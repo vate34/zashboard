@@ -196,7 +196,6 @@ import {
   TABLE_WIDTH_MODE,
 } from '@/constant'
 import {
-  getChainsStringFromConnection,
   getDestinationFromConnection,
   getDestinationTypeFromConnection,
   getHostFromConnection,
@@ -323,7 +322,9 @@ const columns: ColumnDef<Connection>[] = [
   {
     header: () => t(CONNECTIONS_TABLE_ACCESSOR_KEY.Chains),
     id: CONNECTIONS_TABLE_ACCESSOR_KEY.Chains,
-    accessorFn: getChainsStringFromConnection,
+    accessorFn: (original) => {
+      return original.chains
+    },
     cell: ({ row }) => {
       const chains: VNode[] = []
       const originChains = row.original.chains
@@ -645,9 +646,25 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
-const handleCellRightClick = (event: MouseEvent, cell: { getValue: () => unknown }) => {
+const handleCellRightClick = (
+  event: MouseEvent,
+  cell: { column: { id: string }; getValue: () => unknown },
+) => {
   event.preventDefault()
+
+  if (cell.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.Chains) {
+    const chains = [...(cell.getValue() as string[])]
+    const chainsString =
+      proxyChainDirection.value === PROXY_CHAIN_DIRECTION.REVERSE
+        ? chains.join(' → ')
+        : chains.reverse().join(' → ')
+
+    copyToClipboard(chainsString)
+    return
+  }
+
   const cellValue = cell.getValue()
+
   if (cellValue && cellValue !== '-') {
     copyToClipboard(String(cellValue))
   }
