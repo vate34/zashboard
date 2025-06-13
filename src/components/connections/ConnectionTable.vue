@@ -1,10 +1,19 @@
 <template>
   <div
     ref="parentRef"
-    class="h-full overflow-y-auto p-2"
+    class="h-full overflow-auto p-2"
+    :class="{
+      'cursor-grab': !isDragging,
+      'cursor-grabbing': isDragging,
+      'select-none': isDragging,
+    }"
     @touchstart.passive.stop
     @touchmove.passive.stop
     @touchend.passive.stop
+    @mousedown="handleMouseDown"
+    @mousemove="handleMouseMove"
+    @mouseup="handleMouseUp"
+    @mouseleave="handleMouseUp"
   >
     <div :style="{ height: `${totalSize}px` }">
       <table
@@ -29,7 +38,12 @@
               :key="header.id"
               :colSpan="header.colSpan"
               class="relative"
-              :class="header.column.getCanSort() ? 'cursor-pointer select-none' : ''"
+              :class="[
+                header.column.getCanSort() ? 'cursor-pointer select-none' : '',
+                header.column.getIsPinned && header.column.getIsPinned() === 'left'
+                  ? 'bg-base-100 sticky -left-2 z-20'
+                  : '',
+              ]"
               :style="
                 isManualTable && {
                   width: `${header.getSize()}px`,
@@ -38,20 +52,6 @@
               @click="header.column.getToggleSortingHandler()?.($event)"
             >
               <div class="flex items-center gap-1">
-                <button
-                  v-if="header.column.getCanGroup()"
-                  class="cursor-pointer"
-                  @click.stop="() => header.column.getToggleGroupingHandler()()"
-                >
-                  <MagnifyingGlassMinusIcon
-                    v-if="header.column.getIsGrouped()"
-                    class="h-4 w-4"
-                  />
-                  <MagnifyingGlassPlusIcon
-                    v-else
-                    class="h-4 w-4"
-                  />
-                </button>
                 <FlexRender
                   v-if="!header.isPlaceholder"
                   :render="header.column.columnDef.header"
@@ -66,6 +66,39 @@
                   class="h-4 w-4"
                   v-if="header.column.getIsSorted() === 'desc'"
                 />
+                <div>
+                  <button
+                    v-if="header.column.getCanGroup()"
+                    class="btn btn-xs btn-circle btn-ghost"
+                    @click.stop="() => header.column.getToggleGroupingHandler()()"
+                  >
+                    <MagnifyingGlassMinusIcon
+                      v-if="header.column.getIsGrouped()"
+                      class="h-4 w-4"
+                    />
+                    <MagnifyingGlassPlusIcon
+                      v-else
+                      class="h-4 w-4"
+                    />
+                  </button>
+                  <button
+                    v-if="
+                      header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.Host ||
+                      header.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.SniffHost
+                    "
+                    class="btn btn-xs btn-circle btn-ghost"
+                    @click.stop="() => handlePinColumn(header.column)"
+                  >
+                    <MapPinIcon
+                      v-if="header.column.getIsPinned() !== 'left'"
+                      class="h-4 w-4"
+                    />
+                    <XMarkIcon
+                      v-else
+                      class="h-4 w-4"
+                    />
+                  </button>
+                </div>
               </div>
               <div
                 v-if="isManualTable"
@@ -110,7 +143,11 @@
                       ].includes(cell.column.id as CONNECTIONS_TABLE_ACCESSOR_KEY) &&
                         'max-w-xl truncate',
                     ),
+                cell.column.getIsPinned && cell.column.getIsPinned() === 'left'
+                  ? 'sticky -left-2 z-20 bg-inherit shadow-md backdrop-blur-md'
+                  : '',
               ]"
+              @contextmenu="handleCellRightClick($event, cell)"
             >
               <template v-if="cell.column.getIsGrouped()">
                 <template v-if="rows[virtualRow.index].getCanExpand()">
@@ -151,6 +188,7 @@
 <script setup lang="ts">
 import { disconnectByIdAPI } from '@/api'
 import { useConnections } from '@/composables/connections'
+import { useNotification } from '@/composables/notification'
 import {
   CONNECTIONS_TABLE_ACCESSOR_KEY,
   PROXY_CHAIN_DIRECTION,
@@ -158,7 +196,6 @@ import {
   TABLE_WIDTH_MODE,
 } from '@/constant'
 import {
-  getChainsStringFromConnection,
   getDestinationFromConnection,
   getDestinationTypeFromConnection,
   getHostFromConnection,
@@ -182,6 +219,7 @@ import {
   ArrowUpCircleIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
+  MapPinIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import {
@@ -192,7 +230,9 @@ import {
   getSortedRowModel,
   isFunction,
   useVueTable,
+  type Column,
   type ColumnDef,
+  type ColumnPinningState,
   type ExpandedState,
   type GroupingState,
   type Row,
@@ -207,6 +247,7 @@ import { useI18n } from 'vue-i18n'
 import ProxyName from '../proxies/ProxyName.vue'
 
 const { handlerInfo } = useConnections()
+const { showNotification } = useNotification()
 const columnWidthMap = useStorage('config/table-column-width', {
   [CONNECTIONS_TABLE_ACCESSOR_KEY.Close]: 50,
   [CONNECTIONS_TABLE_ACCESSOR_KEY.Host]: 320,
@@ -281,7 +322,9 @@ const columns: ColumnDef<Connection>[] = [
   {
     header: () => t(CONNECTIONS_TABLE_ACCESSOR_KEY.Chains),
     id: CONNECTIONS_TABLE_ACCESSOR_KEY.Chains,
-    accessorFn: getChainsStringFromConnection,
+    accessorFn: (original) => {
+      return original.chains
+    },
     cell: ({ row }) => {
       const chains: VNode[] = []
       const originChains = row.original.chains
@@ -384,6 +427,10 @@ const columns: ColumnDef<Connection>[] = [
 const grouping = ref<GroupingState>([])
 const expanded = ref<ExpandedState>({})
 const sorting = useStorage<SortingState>('config/table-sorting', [])
+const columnPinning = useStorage<ColumnPinningState>('config/table-column-pinning', {
+  left: [],
+  right: [],
+})
 
 const tanstackTable = useVueTable({
   get data() {
@@ -416,6 +463,9 @@ const tanstackTable = useVueTable({
     get columnSizing() {
       return columnWidthMap.value
     },
+    get columnPinning() {
+      return columnPinning.value
+    },
   },
   onGroupingChange: (updater) => {
     if (isFunction(updater)) {
@@ -444,6 +494,13 @@ const tanstackTable = useVueTable({
       >
     } else {
       columnWidthMap.value = updater as Record<CONNECTIONS_TABLE_ACCESSOR_KEY, number>
+    }
+  },
+  onColumnPinningChange: (updater) => {
+    if (isFunction(updater)) {
+      columnPinning.value = updater(columnPinning.value)
+    } else {
+      columnPinning.value = updater
     }
   },
   getSortedRowModel: getSortedRowModel(),
@@ -479,12 +536,137 @@ const sizeOfTable = computed(() => {
 })
 
 const handlerClickRow = (row: Row<Connection>) => {
+  if (isDragging.value) return
+
   if (row.getIsGrouped()) {
     if (row.getCanExpand()) {
       row.getToggleExpandedHandler()()
     }
   } else {
     handlerInfo(row.original)
+  }
+}
+
+const handlePinColumn = (column: Column<Connection, unknown>) => {
+  if (column.getIsPinned() === 'left') {
+    column.pin(false)
+  } else {
+    const currentPinning = columnPinning.value.left || []
+
+    currentPinning.forEach((pinnedColumnId: string) => {
+      if (pinnedColumnId !== column.id) {
+        const pinnedColumn = tanstackTable.getColumn(pinnedColumnId)
+        if (pinnedColumn) {
+          pinnedColumn.pin(false)
+        }
+      }
+    })
+    column.pin('left')
+  }
+}
+
+const isDragging = ref(false)
+const isMouseDown = ref(false)
+const dragStartPos = ref({ x: 0, y: 0 })
+const dragStartScroll = ref({ x: 0, y: 0 })
+const DRAG_THRESHOLD = 5 // 最小拖动阈值
+
+const handleMouseDown = (e: MouseEvent) => {
+  if (e.button !== 0) return // 只处理左键
+  isMouseDown.value = true
+  dragStartPos.value = { x: e.clientX, y: e.clientY }
+
+  if (parentRef.value) {
+    dragStartScroll.value = {
+      x: parentRef.value.scrollLeft,
+      y: parentRef.value.scrollTop,
+    }
+  }
+
+  e.preventDefault()
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!isMouseDown.value || !parentRef.value) return
+
+  const deltaX = e.clientX - dragStartPos.value.x
+  const deltaY = e.clientY - dragStartPos.value.y
+
+  // 检查是否超过拖动阈值
+  if (
+    !isDragging.value &&
+    (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD)
+  ) {
+    isDragging.value = true
+  }
+
+  if (isDragging.value) {
+    parentRef.value.scrollLeft = dragStartScroll.value.x - deltaX
+    parentRef.value.scrollTop = dragStartScroll.value.y - deltaY
+    e.preventDefault()
+  }
+}
+
+const handleMouseUp = () => {
+  // 延迟重置拖动状态，以防止在拖动结束后立即触发点击事件
+  if (isDragging.value) {
+    setTimeout(() => {
+      isDragging.value = false
+    }, 100)
+  }
+  isMouseDown.value = false
+}
+
+// 复制功能
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    showNotification({
+      content: 'copySuccess',
+      type: 'alert-success',
+      timeout: 2000,
+    })
+  } catch {
+    // 降级处理
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      showNotification({
+        content: 'copySuccess',
+        type: 'alert-success',
+        timeout: 2000,
+      })
+    } catch (error) {
+      console.error('复制失败:', error)
+    }
+    document.body.removeChild(textArea)
+  }
+}
+
+const handleCellRightClick = (
+  event: MouseEvent,
+  cell: { column: { id: string }; getValue: () => unknown },
+) => {
+  event.preventDefault()
+
+  if (cell.column.id === CONNECTIONS_TABLE_ACCESSOR_KEY.Chains) {
+    const chains = [...(cell.getValue() as string[])]
+    const chainsString =
+      proxyChainDirection.value === PROXY_CHAIN_DIRECTION.REVERSE
+        ? chains.join(' → ')
+        : chains.reverse().join(' → ')
+
+    copyToClipboard(chainsString)
+    return
+  }
+
+  const cellValue = cell.getValue()
+
+  if (cellValue && cellValue !== '-') {
+    copyToClipboard(String(cellValue))
   }
 }
 </script>
