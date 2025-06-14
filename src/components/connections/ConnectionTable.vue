@@ -3,8 +3,6 @@
     ref="parentRef"
     class="h-full overflow-auto p-2"
     :class="{
-      'cursor-grab': !isDragging,
-      'cursor-grabbing': isDragging,
       'select-none': isDragging,
     }"
     @touchstart.passive.stop
@@ -41,7 +39,7 @@
               :class="[
                 header.column.getCanSort() ? 'cursor-pointer select-none' : '',
                 header.column.getIsPinned && header.column.getIsPinned() === 'left'
-                  ? 'bg-base-100 sticky -left-2 z-20'
+                  ? 'pinned-td bg-base-100 sticky -left-2 z-20'
                   : '',
               ]"
               :style="
@@ -118,7 +116,11 @@
               height: `${virtualRow.size}px`,
               transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
             }"
-            class="bg-base-100 hover:bg-primary! hover:text-primary-content cursor-pointer"
+            class="bg-base-100 hover:bg-primary! hover:text-primary-content"
+            :class="{
+              'cursor-pointer': !isDragging,
+              'cursor-grabbing': isDragging,
+            }"
             @click="handlerClickRow(rows[virtualRow.index])"
           >
             <td
@@ -144,7 +146,7 @@
                         'max-w-xl truncate',
                     ),
                 cell.column.getIsPinned && cell.column.getIsPinned() === 'left'
-                  ? 'sticky -left-2 z-20 bg-inherit shadow-md backdrop-blur-md'
+                  ? 'pinned-td sticky -left-2 z-20 bg-inherit shadow-md'
                   : '',
               ]"
               @contextmenu="handleCellRightClick($event, cell)"
@@ -567,42 +569,28 @@ const handlePinColumn = (column: Column<Connection, unknown>) => {
 
 const isDragging = ref(false)
 const isMouseDown = ref(false)
-const dragStartPos = ref({ x: 0, y: 0 })
-const dragStartScroll = ref({ x: 0, y: 0 })
-const DRAG_THRESHOLD = 5 // 最小拖动阈值
+const DRAG_THRESHOLD = Math.pow(3, 2)
 
 const handleMouseDown = (e: MouseEvent) => {
   if (e.button !== 0) return // 只处理左键
   isMouseDown.value = true
-  dragStartPos.value = { x: e.clientX, y: e.clientY }
-
-  if (parentRef.value) {
-    dragStartScroll.value = {
-      x: parentRef.value.scrollLeft,
-      y: parentRef.value.scrollTop,
-    }
-  }
-
   e.preventDefault()
 }
 
 const handleMouseMove = (e: MouseEvent) => {
   if (!isMouseDown.value || !parentRef.value) return
 
-  const deltaX = e.clientX - dragStartPos.value.x
-  const deltaY = e.clientY - dragStartPos.value.y
+  const deltaX = e.movementX
+  const deltaY = e.movementY
 
   // 检查是否超过拖动阈值
-  if (
-    !isDragging.value &&
-    (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD)
-  ) {
+  if (!isDragging.value && Math.pow(deltaX, 2) + Math.pow(deltaY, 2) > DRAG_THRESHOLD) {
     isDragging.value = true
   }
 
   if (isDragging.value) {
-    parentRef.value.scrollLeft = dragStartScroll.value.x - deltaX
-    parentRef.value.scrollTop = dragStartScroll.value.y - deltaY
+    parentRef.value.scrollLeft -= deltaX
+    parentRef.value.scrollTop -= deltaY
     e.preventDefault()
   }
 }
