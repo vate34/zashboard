@@ -8,7 +8,7 @@ import {
   useSmartGroupSort,
 } from '@/store/settings'
 import { smartWeightsMap } from '@/store/smart'
-import { computed, isProxy, type ComputedRef } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 
 export function useRenderProxies(proxies: ComputedRef<string[]>, proxyGroup?: string) {
   const renderProxies = computed(() => {
@@ -43,7 +43,7 @@ export function useRenderProxies(proxies: ComputedRef<string[]>, proxyGroup?: st
 const getRenderProxies = (proxies: string[], groupName?: string) => {
   const latencyMap = new Map<string, number>()
   const getLatencyForSort = (name: string) => {
-    if (isProxy(name)) {
+    if (isProxyGroup(name)) {
       return -1
     }
     const latency = latencyMap.get(name)!
