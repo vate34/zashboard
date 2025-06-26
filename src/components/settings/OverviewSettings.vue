@@ -13,10 +13,7 @@
           v-model="splitOverviewPage"
         />
       </div>
-      <div
-        class="flex items-center gap-2"
-        v-if="!splitOverviewPage"
-      >
+      <div class="flex items-center gap-2">
         {{ $t('showIPAndConnectionInfo') }}
         <input
           class="toggle"
@@ -24,6 +21,24 @@
           v-model="showIPAndConnectionInfo"
         />
       </div>
+      <template v-if="showIPAndConnectionInfo">
+        <div class="flex items-center gap-2">
+          {{ $t('autoIPCheckWhenStart') }}
+          <input
+            class="toggle"
+            type="checkbox"
+            v-model="autoIPCheck"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          {{ $t('autoConnectionCheckWhenStart') }}
+          <input
+            class="toggle"
+            type="checkbox"
+            v-model="autoConnectionCheck"
+          />
+        </div>
+      </template>
       <div
         class="flex items-center gap-2"
         v-if="splitOverviewPage"
@@ -33,22 +48,6 @@
           class="toggle"
           type="checkbox"
           v-model="displayProxiesRelationship"
-        />
-      </div>
-      <div class="flex items-center gap-2">
-        {{ $t('autoIPCheckWhenStart') }}
-        <input
-          class="toggle"
-          type="checkbox"
-          v-model="autoIPCheck"
-        />
-      </div>
-      <div class="flex items-center gap-2">
-        {{ $t('autoConnectionCheckWhenStart') }}
-        <input
-          class="toggle"
-          type="checkbox"
-          v-model="autoConnectionCheck"
         />
       </div>
       <div class="flex items-center gap-2 max-md:hidden">

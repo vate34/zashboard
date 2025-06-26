@@ -337,12 +337,13 @@ const columns: ColumnDef<Connection>[] = [
       const originChains = row.original.chains
 
       originChains.forEach((chain, index) => {
-        chains.unshift(h(ProxyName, { name: chain, size: 'small' }))
+        chains.unshift(h(ProxyName, { name: chain, size: 'small', key: chain }))
 
         if (index < originChains.length - 1) {
           chains.unshift(
             h(ArrowRightCircleIcon, {
               class: 'h-4 w-4 shrink-0',
+              key: `arrow-${index}`,
             }),
           )
         }

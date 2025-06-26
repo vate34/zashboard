@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full flex-col gap-2 overflow-x-hidden overflow-y-auto p-2">
     <ChartsCard />
-    <NetworkCard />
+    <NetworkCard v-if="showIPAndConnectionInfo" />
     <div
       class="card"
       v-if="displayProxiesRelationship"
@@ -27,6 +27,6 @@ import ConnectionHistory from '@/components/overview/ConnectionHistory.vue'
 import NetworkCard from '@/components/overview/NetworkCard.vue'
 import ProxiesCharts from '@/components/overview/ProxiesCharts.vue'
 import { getLabelFromBackend } from '@/helper/utils'
-import { displayProxiesRelationship } from '@/store/settings'
+import { displayProxiesRelationship, showIPAndConnectionInfo } from '@/store/settings'
 import { activeBackend } from '@/store/setup'
 </script>

@@ -4,7 +4,6 @@ import { getChainsStringFromConnection, getInboundUserFromConnection } from '@/h
 import type { Connection, ConnectionRawMessage } from '@/types'
 import { useStorage, watchOnce } from '@vueuse/core'
 import dayjs from 'dayjs'
-import { differenceWith } from 'lodash'
 import { computed, ref, watch } from 'vue'
 import { autoDisconnectIdleUDP, autoDisconnectIdleUDPTime, useConnectionCard } from './settings'
 
@@ -55,13 +54,18 @@ export const initConnections = () => {
       return
     }
 
-    closedConnections.value = [
-      ...closedConnections.value,
-      ...differenceWith(activeConnections.value, data.connections, (a, b) => a.id === b.id),
-    ].slice(-500)
-    activeConnections.value =
-      data.connections?.map((connection) => {
-        const preConnection = activeConnections.value.find((c) => c.id === connection.id)
+    const activeConnsMap = activeConnections.value.reduce(
+      (acc, c) => {
+        acc[c.id] = c
+        return acc
+      },
+      {} as Record<string, Connection>,
+    )
+
+    const activeConns =
+      data.connections?.map((conn) => {
+        const connection = conn as Connection
+        const preConnection = activeConnsMap[connection.id]
 
         if (
           (connection.metadata.destinationPort === '443' || connection.metadata.sniffHost) &&
@@ -71,19 +75,21 @@ export const initConnections = () => {
         }
 
         if (!preConnection) {
-          return {
-            ...connection,
-            downloadSpeed: 0,
-            uploadSpeed: 0,
-          }
+          connection.downloadSpeed = 0
+          connection.uploadSpeed = 0
+          return connection
         }
 
-        return {
-          ...connection,
-          downloadSpeed: connection.download - preConnection.download,
-          uploadSpeed: connection.upload - preConnection.upload,
-        }
+        delete activeConnsMap[connection.id]
+        connection.downloadSpeed = connection.download - preConnection.download
+        connection.uploadSpeed = connection.upload - preConnection.upload
+        return connection
       }) ?? []
+
+    closedConnections.value = [...closedConnections.value, ...Object.values(activeConnsMap)].slice(
+      -500,
+    )
+    activeConnections.value = activeConns
   })
 
   if (autoDisconnectIdleUDP.value) {
