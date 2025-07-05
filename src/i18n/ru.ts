@@ -123,8 +123,8 @@ const ru: LANG_MESSAGE = {
   manageHiddenGroup: 'Управление скрытыми группами',
   showIPAndConnectionInfo: 'Показать IP и информацию о соединениях',
   transparent: 'Прозрачность',
-  iconSize: 'Размер иконки',
-  iconMarginRight: 'Отступ правой иконки',
+  proxyGroupIconSize: 'Размер иконки группы прокси',
+  proxyGroupIconMargin: 'Отступ иконки группы прокси',
   allowLan: 'Разрешить локальную сеть',
   proxyChainDirection: 'Направление цепочки прокси',
   reverse: 'Обратное',
@@ -220,6 +220,13 @@ const ru: LANG_MESSAGE = {
   saveFailed: 'Не удалось сохранить',
   checking: 'Проверка...',
   copySuccess: 'Копирование успешно',
+  importFromBackend: 'Импортировать из бэкенда',
+  importFromBackendTip:
+    'По умолчанию ./zashboard-settings.json будет импортировать настройки из папки ui бэкенда, пожалуйста, убедитесь, что файл zashboard-settings.json существует в папке ui, в противном случае импорт не будет выполнен',
+  importFailed: 'Импорт не выполнен, проверьте url {url}',
+  autoImportFromUrl: 'Автоматический импорт',
+  autoImportFromUrlTip:
+    'При включении настройки будут автоматически импортироваться из url при открытии zashboard. Если хэш отличается от последнего импортированного хэша, настройки будут импортированы заново и страница будет обновлена.',
 }
 
 export default ru
