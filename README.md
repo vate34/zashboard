@@ -56,7 +56,11 @@ docker run -d -p 80:80 ghcr.io/zephyruso/zashboard:latest
 1. 连接页面有两种布局样式：可自定义卡片和可自定义表格。建议在 PC 上使用表格，在移动设备上使用卡片。
 2. 连接表格可被鼠标左键拖动，右键可复制单元格内容。
 3. 右键点击节点/节点组卡片可对节点/节点组进行测速。
-4. 设置中可打开Global节点的自动显示/隐藏
+4. 设置中可打开Global节点的自动显示/隐藏。
+
+## Pantheon
+
+[Pantheon](https://github.com/Zephyruso/Pantheon) 是一个基于sing-box和zashboard的linux/windows客户端，目前正在开发和测试中并已经发布了初始版本
 
 ## URL params format
 
